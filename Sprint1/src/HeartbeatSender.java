@@ -1,6 +1,8 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.List;
 import java.net.MulticastSocket;
 
 public class HeartbeatSender extends Thread {
@@ -12,15 +14,26 @@ public class HeartbeatSender extends Thread {
         try (MulticastSocket socket = new MulticastSocket()) {
             InetAddress group = InetAddress.getByName(MULTICAST_GROUP);
             while (true) {
-                String message = "HEARTBEAT";
+                List<String> documents = getDocumentList();
+                String documentsData = String.join(", ", documents);
+
+                String message = "DOCUMENT_LIST: [" + documentsData + "]";
                 byte[] buffer = message.getBytes();
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, PORT);
+
                 socket.send(packet);
-                System.out.println("Heartbeat enviado para " + MULTICAST_GROUP);
+                System.out.println("Lista de documentos enviada para " + MULTICAST_GROUP);
                 Thread.sleep(5000); // Intervalo de 5 segundos
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
+    private List<String> getDocumentList() {
+        List<String> documents = new ArrayList<>();
+        documents.add("{id: 1, title: 'Doc1', content: 'Content of Doc1'}");
+        documents.add("{id: 2, title: 'Doc2', content: 'Content of Doc2'}");
+        documents.add("{id: 3, title: 'Doc3', content: 'Content of Doc3'}");
+        return documents;
     }
 }
