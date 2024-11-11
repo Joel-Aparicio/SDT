@@ -1,24 +1,27 @@
 public class MulticastManager {
+    private boolean isLeader;
     private HeartbeatSender heartbeatSender;
     private HeartbeatReceiver heartbeatReceiver;
     private SyncRequester syncRequester;
 
-    public MulticastManager() {
-        // Instancia as threads
-        heartbeatSender = new HeartbeatSender();
-        heartbeatReceiver = new HeartbeatReceiver();
-        syncRequester = new SyncRequester();
+    public MulticastManager(boolean isLeader) {
+        this.isLeader = isLeader;
 
-        // Inicia as threads
-        heartbeatSender.start();
-        heartbeatReceiver.start();
-        syncRequester.start();
-
-        System.out.println("Threads iniciadas.");
+        if (isLeader) {
+            heartbeatSender = new HeartbeatSender();
+            heartbeatSender.start();
+            System.out.println("Líder: enviando heartbeats.");
+        } else {
+            heartbeatReceiver = new HeartbeatReceiver();
+            syncRequester = new SyncRequester();
+            heartbeatReceiver.start();
+            syncRequester.start();
+            System.out.println("Elemento não-líder: recebendo heartbeats e enviando pedidos de sincronização.");
+        }
     }
 
     public static void main(String[] args) {
-        // Cria a instância do elemento principal, que lança as threads automaticamente
-        new MulticastManager();
+        boolean isLeader = true;
+        new MulticastManager(isLeader);
     }
 }
