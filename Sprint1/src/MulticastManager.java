@@ -11,6 +11,10 @@ public class MulticastManager {
             heartbeatSender = new HeartbeatSender();
             heartbeatSender.start();
             System.out.println("Líder: enviando heartbeats.");
+            heartbeatReceiver = new HeartbeatReceiver();
+            syncRequester = new SyncRequester();
+            heartbeatReceiver.start();
+            syncRequester.start();
         } else {
             heartbeatReceiver = new HeartbeatReceiver();
             syncRequester = new SyncRequester();
