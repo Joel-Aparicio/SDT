@@ -7,9 +7,13 @@ import java.net.MulticastSocket;
 public class HeartbeatReceiver extends Thread {
     private static final String MULTICAST_GROUP = "224.0.0.1";
     private static final int PORT = 5000;
+    private static final int TOTAL_EXPECTED_PACKETS = 5;
 
     @Override
     public void run() {
+        System.out.println("HeartbeatReceiver iniciado...");
+        new PacketReceiverVerifier(TOTAL_EXPECTED_PACKETS).start(); // Inicia a verificação de pacotes
+
         System.out.println("HeartbeatReceiver iniciado...");
         try (MulticastSocket socket = new MulticastSocket(PORT)) {
             InetAddress group = InetAddress.getByName(MULTICAST_GROUP);
