@@ -3,16 +3,26 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HeartbeatReceiver extends Thread {
     private static final String MULTICAST_GROUP = "224.0.0.1";
     private static final int PORT = 5000;
     private static final int TOTAL_EXPECTED_PACKETS = 5;
+    private boolean isLeader;
+    private List<String> committedDocuments;
 
     @Override
     public void run() {
         System.out.println("HeartbeatReceiver iniciado...");
         new PacketReceiverVerifier(TOTAL_EXPECTED_PACKETS).start(); // Inicia a verificação de pacotes
+
+        this.isLeader = isLeader;
+        this.committedDocuments = new ArrayList<>();
+        if (isLeader) {
+            committedDocuments.add("{id: 1, title: 'Doc1', content: 'Initial Content'}");
+        }
 
         System.out.println("HeartbeatReceiver iniciado...");
         try (MulticastSocket socket = new MulticastSocket(PORT)) {
@@ -31,10 +41,14 @@ public class HeartbeatReceiver extends Thread {
                 if (message.startsWith("NEW_VERSION")) {
                     // Envia um ACK para o líder após receber a nova versão do documento
                     sendAck(packet.getAddress());
+                    committedDocuments.add(message);
+                    System.out.println("Nova versão adicionada: " + message);
                     System.out.println("ACK enviado para o líder.");
                 } else if (message.equals("SYNC_REQUEST")) {
                     // Responde ao pedido de sincronização com uma mensagem de sincronização
                     handleSyncRequest(packet.getAddress());
+                    sendDocumentList(packet.getAddress(), packet.getPort());
+                    System.out.println("Nova versão adicionada: " + message);
                     System.out.println("Pedido de sincronização recebido e respondido.");
                 }
             }
@@ -67,7 +81,16 @@ public class HeartbeatReceiver extends Thread {
             e.printStackTrace();
         }
     }
-}
 
+    private void sendDocumentList(InetAddress address, int port) throws IOException {
+        String documentList = String.join(";", committedDocuments);
+        try (MulticastSocket socket = new MulticastSocket()) {
+            byte[] buffer = documentList.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, port);
+            socket.send(packet);
+            System.out.println("Lista de documentos enviada para " + address.getHostAddress());
+        }
+    }
+}
 
 
